@@ -1,0 +1,233 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>صيدلية عبد الكريم القدح</title>
+    <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700;800&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --primary: #2a9d8f;
+            --dark: #264653;
+            --accent: #e76f51;
+            --bg: #f8f9fa;
+            --card-bg: #ffffff;
+            --text: #333;
+            --border: #ddd;
+            --shadow: 0 4px 15px rgba(0,0,0,0.05);
+        }
+
+        [data-theme="dark"] {
+            --bg: #121212;
+            --card-bg: #1e1e1e;
+            --text: #e0e0e0;
+            --border: #333;
+            --shadow: 0 4px 15px rgba(0,0,0,0.5);
+        }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Cairo', sans-serif; transition: background 0.3s, color 0.3s; }
+        body { background-color: var(--bg); color: var(--text); line-height: 1.6; }
+
+        /* الهيدر والأزرار العلوية */
+        header { background: var(--primary); color: white; padding: 40px 20px; text-align: center; }
+        .top-bar { display: flex; justify-content: space-between; padding: 10px 5%; background: var(--card-bg); border-bottom: 1px solid var(--border); sticky; top: 0; z-index: 1001; }
+        
+        .btn { padding: 8px 16px; border-radius: 8px; border: none; cursor: pointer; font-weight: 600; font-size: 0.9rem; }
+        .btn-admin { background: var(--dark); color: white; }
+        .btn-theme { background: #eee; color: #333; }
+        [data-theme="dark"] .btn-theme { background: #333; color: #eee; }
+
+        /* مودال الدخول */
+        .modal { position: fixed; inset: 0; background: rgba(0,0,0,0.7); display: none; align-items: center; justify-content: center; z-index: 2000; }
+        .modal-content { background: var(--card-bg); padding: 30px; border-radius: 15px; width: 90%; max-width: 400px; text-align: center; }
+        .modal-content input { width: 100%; padding: 12px; margin: 10px 0; border: 1px solid var(--border); border-radius: 8px; background: var(--bg); color: var(--text); }
+
+        /* لوحة التحكم - تنسيق مرتب */
+        .admin-section { background: var(--card-bg); padding: 25px; border-radius: 15px; margin: 20px auto; max-width: 800px; display: none; border: 2px solid var(--primary); }
+        .admin-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; }
+        .full-width { grid-column: 1 / -1; }
+
+        /* الأقسام */
+        .nav-cats { display: flex; overflow-x: auto; padding: 15px 5%; gap: 10px; background: var(--card-bg); border-bottom: 1px solid var(--border); }
+        .cat-item { padding: 8px 20px; background: var(--bg); border: 1px solid var(--border); border-radius: 25px; cursor: pointer; white-space: nowrap; }
+        .cat-item.active { background: var(--primary); color: white; border-color: var(--primary); }
+
+        /* شبكة المنتجات */
+        .container { padding: 20px 5%; }
+        .products-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 25px; }
+        
+        .card { background: var(--card-bg); border-radius: 15px; overflow: hidden; box-shadow: var(--shadow); border: 1px solid var(--border); display: flex; flex-direction: column; }
+        .card img { width: 100%; height: 220px; object-fit: cover; }
+        .card-body { padding: 20px; flex-grow: 1; display: flex; flex-direction: column; }
+        .card-title { font-size: 1.3rem; font-weight: 700; color: var(--primary); margin-bottom: 5px; }
+        .card-price { font-size: 1.5rem; font-weight: 800; color: var(--accent); margin-bottom: 10px; }
+        .card-text { font-size: 0.9rem; margin-bottom: 15px; flex-grow: 1; }
+
+        .btn-wa { background: #25d366; color: white; text-align: center; text-decoration: none; padding: 10px; border-radius: 8px; font-weight: 700; }
+        .btn-del { background: #e63946; color: white; margin-top: 10px; }
+
+        @media (max-width: 600px) {
+            .admin-grid { grid-template-columns: 1fr; }
+            .products-grid { grid-template-columns: 1fr; }
+        }
+    </style>
+</head>
+<body data-theme="light">
+
+    <div class="top-bar">
+        <button class="btn btn-theme" onclick="toggleTheme()">🌙 ثيم ليلي/نهاري</button>
+        <div>
+            <button class="btn btn-admin" id="loginBtn" onclick="openModal()">🔐 دخول الإدارة</button>
+            <button class="btn btn-admin" id="logoutBtn" style="display:none; background:var(--accent)" onclick="logout()">خروج</button>
+        </div>
+    </div>
+
+    <header>
+        <h1>صيدلية عبد الكريم</h1>
+        <p>بإدارة الصيدلاني: عبد الكريم القدح</p>
+    </header>
+
+    <div class="nav-cats" id="catsNav">
+        <div class="cat-item active" onclick="filterBy('الكل')">الكل</div>
+        <div class="cat-item" onclick="filterBy('عناية بالجسم')">عناية بالجسم</div>
+        <div class="cat-item" onclick="filterBy('بشرة')">بشرة</div>
+        <div class="cat-item" onclick="filterBy('شعر')">شعر</div>
+        <div class="cat-item" onclick="filterBy('أدوية')">أدوية</div>
+        <div class="cat-item" onclick="filterBy('حليب أطفال')">حليب أطفال</div>
+    </div>
+
+    <div class="container">
+        <div id="adminPanel" class="admin-section">
+            <h3 style="margin-bottom:15px">إضافة منتج جديد</h3>
+            <div class="admin-grid">
+                <input type="text" id="pName" placeholder="اسم الدواء">
+                <input type="text" id="pPrice" placeholder="السعر (مثلاً: 25,000 ل.س)">
+                <select id="pCat">
+                    <option value="عناية بالجسم">عناية بالجسم</option>
+                    <option value="بشرة">بشرة</option>
+                    <option value="شعر">شعر</option>
+                    <option value="أدوية">أدوية</option>
+                    <option value="حليب أطفال">حليب أطفال</option>
+                </select>
+                <input type="file" id="pImage" accept="image/*">
+                <textarea id="pUsage" class="full-width" placeholder="طريقة الاستخدام..." rows="3"></textarea>
+                <button class="btn btn-admin full-width" style="background:var(--primary)" onclick="saveProduct()">✅ حفظ ونشر المنتج</button>
+            </div>
+        </div>
+
+        <div class="products-grid" id="mainGrid"></div>
+    </div>
+
+    <div id="loginModal" class="modal">
+        <div class="modal-content">
+            <h3>تسجيل دخول الإدارة</h3>
+            <input type="text" id="uName" placeholder="اسم المستخدم">
+            <input type="password" id="uPass" placeholder="كلمة المرور">
+            <button class="btn btn-admin" style="width:100%" onclick="login()">دخول</button>
+            <button class="btn" style="width:100%; background:none; color:#999" onclick="closeModal()">إلغاء</button>
+        </div>
+    </div>
+
+    <script>
+        let items = JSON.parse(localStorage.getItem('pharm_store_v3')) || [];
+        let isLogged = false;
+
+        function toggleTheme() {
+            const body = document.body;
+            const current = body.getAttribute('data-theme');
+            body.setAttribute('data-theme', current === 'light' ? 'dark' : 'light');
+        }
+
+        function openModal() { document.getElementById('loginModal').style.display = 'flex'; }
+        function closeModal() { document.getElementById('loginModal').style.display = 'none'; }
+
+        function login() {
+            const u = document.getElementById('uName').value;
+            const p = document.getElementById('uPass').value;
+            if(u === 'Adm1tt' && p === 'Adm1tt') {
+                isLogged = true;
+                document.getElementById('adminPanel').style.display = 'block';
+                document.getElementById('loginBtn').style.display = 'none';
+                document.getElementById('logoutBtn').style.display = 'block';
+                closeModal();
+                render();
+            } else { alert('خطأ في البيانات!'); }
+        }
+
+        function logout() {
+            isLogged = false;
+            document.getElementById('uName').value = ''; // تفرغ الحقول
+            document.getElementById('uPass').value = ''; // تفرغ الحقول
+            document.getElementById('adminPanel').style.display = 'none';
+            document.getElementById('loginBtn').style.display = 'block';
+            document.getElementById('logoutBtn').style.display = 'none';
+            render();
+        }
+
+        function saveProduct() {
+            const name = document.getElementById('pName').value;
+            const price = document.getElementById('pPrice').value;
+            const cat = document.getElementById('pCat').value;
+            const usage = document.getElementById('pUsage').value;
+            const file = document.getElementById('pImage').files[0];
+
+            if(!name || !price) return alert('عبي البيانات الأساسية!');
+
+            const add = (img) => {
+                items.push({ id: Date.now(), name, price, cat, usage, img });
+                localStorage.setItem('pharm_store_v3', JSON.stringify(items));
+                render();
+                // تنظيف الحقول
+                document.getElementById('pName').value = '';
+                document.getElementById('pPrice').value = '';
+                document.getElementById('pUsage').value = '';
+            };
+
+            if(file) {
+                const reader = new FileReader();
+                reader.onload = (e) => add(e.target.result);
+                reader.readAsDataURL(file);
+            } else {
+                add('https://via.placeholder.com/400x300?text=No+Photo');
+            }
+        }
+
+        function render(filter = 'الكل') {
+            const grid = document.getElementById('mainGrid');
+            grid.innerHTML = '';
+            const filtered = filter === 'الكل' ? items : items.filter(i => i.cat === filter);
+
+            filtered.forEach(i => {
+                grid.innerHTML += `
+                    <div class="card">
+                        <img src="${i.img}" alt="${i.name}">
+                        <div class="card-body">
+                            <h3 class="card-title">${i.name}</h3>
+                            <div class="card-price">${i.price}</div>
+                            <p class="card-text">${i.usage || 'لا يوجد وصف حالياً.'}</p>
+                            <a href="https://wa.me/963900000000?text=طلب: ${i.name}" class="btn-wa">اطلب واتساب</a>
+                            ${isLogged ? `<button class="btn btn-del" onclick="deleteItem(${i.id})">حذف المنتج</button>` : ''}
+                        </div>
+                    </div>
+                `;
+            });
+        }
+
+        function filterBy(cat) {
+            document.querySelectorAll('.cat-item').forEach(el => el.classList.remove('active'));
+            event.target.classList.add('active');
+            render(cat);
+        }
+
+        function deleteItem(id) {
+            if(confirm('متأكد؟')) {
+                items = items.filter(i => i.id !== id);
+                localStorage.setItem('pharm_store_v3', JSON.stringify(items));
+                render();
+            }
+        }
+
+        render();
+    </script>
+</body>
+</html>
